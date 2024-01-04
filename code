@@ -1,0 +1,78 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Take user input for data
+row_ids = list(map(int, input("Enter Row IDs (comma-separated): ").split(',')))
+order_ids = list(map(int, input("Enter Order IDs (comma-separated): ").split(',')))
+ship_modes = input("Enter Ship Modes (comma-separated): ").split(',')
+customer_ids = list(map(int, input("Enter Customer IDs (comma-separated): ").split(',')))
+segments = input("Enter Segments (comma-separated): ").split(',')
+countries = input("Enter Countries (comma-separated): ").split(',')
+cities = input("Enter Cities (comma-separated): ").split(',')
+states = input("Enter States (comma-separated): ").split(',')
+product_categories = input("Enter Product Categories (comma-separated): ").split(',')
+order_amounts = list(map(int, input("Enter Order Amounts (comma-separated): ").split(',')))
+order_dates = input("Enter Order Dates (comma-separated YYYY-MM-DD): ").split(',')
+
+# Create a DataFrame
+data = {
+    'Row_ID': row_ids,
+    'Order_ID': order_ids,
+    'Ship_Mode': ship_modes,
+    'Customer_ID': customer_ids,
+    'Segment': segments,
+    'Country': countries,
+    'City': cities,
+    'State': states,
+    'Product_Category': product_categories,
+    'Order_Amount': order_amounts,
+    'Order_Date': order_dates
+}
+
+df = pd.DataFrame(data)
+
+# Convert Order_Date to datetime
+df['Order_Date'] = pd.to_datetime(df['Order_Date'])
+
+# Analyze customer behavior
+customer_behavior = df.groupby('Customer_ID')['Order_Amount'].sum().reset_index()
+
+# Visualize customer behavior
+plt.figure(figsize=(8, 6))
+sns.barplot(x='Customer_ID', y='Order_Amount', data=customer_behavior)
+plt.title('Customer Behavior')
+plt.xlabel('Customer ID')
+plt.ylabel('Total Order Amount')
+plt.show()
+
+# Analyze popular product categories
+product_category_counts = df['Product_Category'].value_counts()
+
+# Visualize popular product categories
+plt.figure(figsize=(8, 6))
+product_category_counts.plot(kind='bar')
+plt.title('Popular Product Categories')
+plt.xlabel('Product Category')
+plt.ylabel('Number of Orders')
+plt.show()
+
+# Analyze market trends over time
+df['Month'] = df['Order_Date'].dt.month
+
+# Visualize market trends
+monthly_trends = df.groupby('Month')['Order_Amount'].sum().reset_index()
+
+plt.figure(figsize=(8, 6))
+sns.lineplot(x='Month', y='Order_Amount', data=monthly_trends, marker='o')
+plt.title('Monthly Market Trends')
+plt.xlabel('Month')
+plt.ylabel('Total Order Amount')
+plt.show()
+
+# Provide strategic recommendations based on the analysis
+
+print("Strategic Recommendations:")
+print("- Focus on promoting Electronics as it is the most popular product category.")
+print("- Consider offering discounts or promotions during peak months to boost sales.")
+print("- Explore partnerships with beauty brands to expand the Beauty product category.")
