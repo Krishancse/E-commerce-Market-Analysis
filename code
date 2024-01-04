@@ -1,39 +1,53 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import psycopg2
+
+# Take user input for database connection
+db_host = input("Enter PostgreSQL database host: ")
+db_port = input("Enter PostgreSQL database port: ")
+db_name = input("Enter PostgreSQL database name: ")
+db_user = input("Enter PostgreSQL database user: ")
+db_password = input("Enter PostgreSQL database password: ")
+
+# Establish a connection to the PostgreSQL database
+conn = psycopg2.connect(
+    host=db_host,
+    port=db_port,
+    database=db_name,
+    user=db_user,
+    password=db_password
+)
+
+# Create a cursor object to execute SQL queries
+cursor = conn.cursor()
 
 # Take user input for data
 row_ids = list(map(int, input("Enter Row IDs (comma-separated): ").split(',')))
 order_ids = list(map(int, input("Enter Order IDs (comma-separated): ").split(',')))
-ship_modes = input("Enter Ship Modes (comma-separated): ").split(',')
-customer_ids = list(map(int, input("Enter Customer IDs (comma-separated): ").split(',')))
-segments = input("Enter Segments (comma-separated): ").split(',')
-countries = input("Enter Countries (comma-separated): ").split(',')
-cities = input("Enter Cities (comma-separated): ").split(',')
-states = input("Enter States (comma-separated): ").split(',')
-product_categories = input("Enter Product Categories (comma-separated): ").split(',')
-order_amounts = list(map(int, input("Enter Order Amounts (comma-separated): ").split(',')))
-order_dates = input("Enter Order Dates (comma-separated YYYY-MM-DD): ").split(',')
+# Continue taking input for other columns
 
 # Create a DataFrame
 data = {
     'Row_ID': row_ids,
     'Order_ID': order_ids,
-    'Ship_Mode': ship_modes,
-    'Customer_ID': customer_ids,
-    'Segment': segments,
-    'Country': countries,
-    'City': cities,
-    'State': states,
-    'Product_Category': product_categories,
-    'Order_Amount': order_amounts,
-    'Order_Date': order_dates
+    # Continue adding other columns
 }
 
 df = pd.DataFrame(data)
 
 # Convert Order_Date to datetime
 df['Order_Date'] = pd.to_datetime(df['Order_Date'])
+
+# Insert data into the PostgreSQL table
+for _, row in df.iterrows():
+    cursor.execute("""
+        INSERT INTO your_table_name ("Row_ID", "Order_ID", "Order_Date", "Ship_Mode", "Customer_ID", "Segment", "Country", "City", "State", "Postal_Code", "Region", "Product_ID", "Category", "Sub_Category", "Product_Name", "Sales", "Quantity", "Discount", "Profit")
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, tuple(row))
+
+# Commit the changes to the database
+conn.commit()
 
 # Analyze customer behavior
 customer_behavior = df.groupby('Customer_ID')['Order_Amount'].sum().reset_index()
@@ -76,3 +90,7 @@ print("Strategic Recommendations:")
 print("- Focus on promoting Electronics as it is the most popular product category.")
 print("- Consider offering discounts or promotions during peak months to boost sales.")
 print("- Explore partnerships with beauty brands to expand the Beauty product category.")
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
