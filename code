@@ -1,96 +1,54 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import psycopg2
 
-# Take user input for database connection
-db_host = input("Enter PostgreSQL database host: ")
-db_port = input("Enter PostgreSQL database port: ")
-db_name = input("Enter PostgreSQL database name: ")
-db_user = input("Enter PostgreSQL database user: ")
-db_password = input("Enter PostgreSQL database password: ")
+# Load the dataset from Excel
+excel_path = r'C:\Users\Dell\Downloads\US E-commerce records 2020.xlsx'
+df = pd.read_excel(excel_path)
 
-# Establish a connection to the PostgreSQL database
-conn = psycopg2.connect(
-    host=db_host,
-    port=db_port,
-    database=db_name,
-    user=db_user,
-    password=db_password
-)
+# Display basic information about the dataset
+print(df.info())
 
-# Create a cursor object to execute SQL queries
-cursor = conn.cursor()
-
-# Take user input for data
-row_ids = list(map(int, input("Enter Row IDs (comma-separated): ").split(',')))
-order_ids = list(map(int, input("Enter Order IDs (comma-separated): ").split(',')))
-# Continue taking input for other columns
-
-# Create a DataFrame
-data = {
-    'Row_ID': row_ids,
-    'Order_ID': order_ids,
-    # Continue adding other columns
-}
-
-df = pd.DataFrame(data)
-
-# Convert Order_Date to datetime
-df['Order_Date'] = pd.to_datetime(df['Order_Date'])
-
-# Insert data into the PostgreSQL table
-for _, row in df.iterrows():
-    cursor.execute("""
-        INSERT INTO your_table_name ("Row_ID", "Order_ID", "Order_Date", "Ship_Mode", "Customer_ID", "Segment", "Country", "City", "State", "Postal_Code", "Region", "Product_ID", "Category", "Sub_Category", "Product_Name", "Sales", "Quantity", "Discount", "Profit")
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, tuple(row))
-
-# Commit the changes to the database
-conn.commit()
+# Explore the first few rows of the dataset
+print(df.head())
 
 # Analyze customer behavior
-customer_behavior = df.groupby('Customer_ID')['Order_Amount'].sum().reset_index()
-
-# Visualize customer behavior
-plt.figure(figsize=(8, 6))
-sns.barplot(x='Customer_ID', y='Order_Amount', data=customer_behavior)
-plt.title('Customer Behavior')
-plt.xlabel('Customer ID')
-plt.ylabel('Total Order Amount')
+# Example: Visualize customer demographics
+plt.figure(figsize=(12, 6))
+df['Gender'].value_counts().plot(kind='bar', color=['skyblue', 'pink'])
+plt.title('Customer Demographics')
+plt.xlabel('Gender')
+plt.ylabel('Count')
 plt.show()
 
 # Analyze popular product categories
-product_category_counts = df['Product_Category'].value_counts()
-
-# Visualize popular product categories
-plt.figure(figsize=(8, 6))
-product_category_counts.plot(kind='bar')
-plt.title('Popular Product Categories')
+# Example: Visualize product category distribution
+plt.figure(figsize=(12, 6))
+df['Product_Category'].value_counts().plot(kind='bar', color='green')
+plt.title('Product Category Distribution')
 plt.xlabel('Product Category')
-plt.ylabel('Number of Orders')
+plt.ylabel('Count')
 plt.show()
 
-# Analyze market trends over time
-df['Month'] = df['Order_Date'].dt.month
+# Analyze emerging market trends
+# Example: Visualize monthly sales trends
+df['OrderDate'] = pd.to_datetime(df['OrderDate'])
+df['Month'] = df['OrderDate'].dt.month
+monthly_sales = df.groupby('Month')['Sales'].sum()
 
-# Visualize market trends
-monthly_trends = df.groupby('Month')['Order_Amount'].sum().reset_index()
-
-plt.figure(figsize=(8, 6))
-sns.lineplot(x='Month', y='Order_Amount', data=monthly_trends, marker='o')
-plt.title('Monthly Market Trends')
+plt.figure(figsize=(12, 6))
+monthly_sales.plot(kind='line', marker='o', color='orange')
+plt.title('Monthly Sales Trends')
 plt.xlabel('Month')
-plt.ylabel('Total Order Amount')
+plt.ylabel('Total Sales')
 plt.show()
 
-# Provide strategic recommendations based on the analysis
+# Present strategic recommendations
+# Example: Identify top-performing product categories
+top_categories = df.groupby('Product_Category')['Sales'].sum().sort_values(ascending=False).head(3)
+print('Top-performing product categories:')
+print(top_categories)
 
-print("Strategic Recommendations:")
-print("- Focus on promoting Electronics as it is the most popular product category.")
-print("- Consider offering discounts or promotions during peak months to boost sales.")
-print("- Explore partnerships with beauty brands to expand the Beauty product category.")
-
-# Close the cursor and connection
-cursor.close()
-conn.close()
+# Example: Recommend focusing on marketing efforts for top categories
+print('\nStrategic Recommendations:')
+for category, sales in top_categories.iteritems():
+    print(f"- Invest in marketing for {category} to capitalize on its popularity and drive sales.")
